@@ -17,7 +17,7 @@ class App extends React.Component {
       ac_mode: 0,
       ac_wind: 1,
       ac_actual_wind: 1,
-      ac_temp: 26.0,
+      ac_temp: "26.0",
       temp_min: 0,
       temp_max: 40,
       online_time: 0,
@@ -72,7 +72,6 @@ class App extends React.Component {
       else {
         is_served = false;
       }
-      let ac_temp = json['target_temp'];
       let power = json['elec'];
       let online_time = json['online_time'];
       let checkin_time = json['checkin_time'];
@@ -84,7 +83,6 @@ class App extends React.Component {
         is_served: is_served,
         room_id: room_id,
         ac_actual_wind: ac_actual_wind,
-        ac_temp: ac_temp,
         online_time: online_time,
         checkin_time: checkin_time,
         power: power,
@@ -107,26 +105,38 @@ class App extends React.Component {
     this.interval_order && clearInterval(this.interval_order);
   }
 
+  update_ac_mode(ac_temp) {
+    let ac_mode = 0;
+    if (Number(this.state.room_temp).toFixed(1) < ac_temp) {
+      ac_mode = 1;
+    }
+    else if (Number(this.state.room_temp).toFixed(1) > ac_temp) {
+      ac_mode = -1;
+    }
+    this.setState({
+      ac_mode: ac_mode
+    })
+    //console.log("ac_temp: " + ac_temp + " ac_mode: " + ac_mode)
+  }
+
   update_room_temp() {
     let room_temp = this.state.room_temp;
     let int = this.state.interval_update_room_temp;
-    let ac_mode = 0;
     if (this.state.is_served) {
       if (Number(this.state.room_temp).toFixed(1) < this.state.ac_temp) {
         room_temp += (0.5 + (this.state.ac_actual_wind - 2)*0.2) / (60000 / int)
-        ac_mode = 1
       } 
       else if (Number(this.state.room_temp).toFixed(1) > this.state.ac_temp){
         room_temp -= (0.5 + (this.state.ac_actual_wind - 2)*0.2) / (60000 / int)
-        ac_mode = -1
       }
+      this.update_ac_mode(this.state.ac_temp);
       this.setState({
         room_temp: room_temp,
-        ac_mode: ac_mode
       })
       console.log(this.state.room_temp)
     }
     else {
+      let ac_mode = 0;
       if (Number(this.state.room_temp).toFixed(1) < this.state.default_room_temp) {
         room_temp += 0.5 / (60000 / int)
       } 
@@ -225,6 +235,7 @@ class App extends React.Component {
     this.setState({
       ac_temp: Number(temp).toFixed(1)
     })
+    this.update_ac_mode(temp);
     this.stop_order_timer();
     this.start_order_timer(this.wind_int2str(this.state.ac_wind), temp);
   }
