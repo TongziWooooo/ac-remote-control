@@ -14,7 +14,9 @@ class App extends React.Component {
       room_id: "000",
       room_temp: 0.0,
       default_room_temp: 0.0,
+      ac_mode: 0,
       ac_wind: 1,
+      ac_actual_wind: 1,
       ac_temp: 26.0,
       temp_min: 0,
       temp_max: 40,
@@ -61,11 +63,11 @@ class App extends React.Component {
     } else {
       let room_id = json['room_id'];
       let ac_status = json['ac_status'];
-      let ac_wind = this.state.ac_wind;
+      let ac_actual_wind = this.state.ac_wind;
       let is_served = this.state.is_served;
       if (ac_status !== 'off') {
         is_served = true;
-        ac_wind = this.wind_str2int(ac_status);
+        ac_actual_wind = this.wind_str2int(ac_status);
       }
       else {
         is_served = false;
@@ -81,7 +83,7 @@ class App extends React.Component {
         is_checked_in: is_checked_in,
         is_served: is_served,
         room_id: room_id,
-        ac_wind: ac_wind,
+        ac_actual_wind: ac_actual_wind,
         ac_temp: ac_temp,
         online_time: online_time,
         checkin_time: checkin_time,
@@ -106,23 +108,25 @@ class App extends React.Component {
   }
 
   update_room_temp() {
+    let room_temp = this.state.room_temp;
+    let int = this.state.interval_update_room_temp;
+    let ac_mode = 0;
     if (this.state.is_served) {
-      let room_temp = this.state.room_temp;
-      let int = this.state.interval_update_room_temp;
       if (Number(this.state.room_temp).toFixed(1) < this.state.ac_temp) {
-        room_temp += (0.5 + (this.state.ac_wind - 2)*0.2) / (60000 / int)
+        room_temp += (0.5 + (this.state.ac_actual_wind - 2)*0.2) / (60000 / int)
+        ac_mode = 1
       } 
       else if (Number(this.state.room_temp).toFixed(1) > this.state.ac_temp){
-        room_temp -= (0.5 + (this.state.ac_wind - 2)*0.2) / (60000 / int)
+        room_temp -= (0.5 + (this.state.ac_actual_wind - 2)*0.2) / (60000 / int)
+        ac_mode = -1
       }
       this.setState({
-        room_temp: room_temp
+        room_temp: room_temp,
+        ac_mode: ac_mode
       })
       console.log(this.state.room_temp)
     }
     else {
-      let room_temp = this.state.room_temp;
-      let int = this.state.interval_update_room_temp;
       if (Number(this.state.room_temp).toFixed(1) < this.state.default_room_temp) {
         room_temp += 0.5 / (60000 / int)
       } 
@@ -130,7 +134,8 @@ class App extends React.Component {
         room_temp -= 0.5 / (60000 / int)
       }
       this.setState({
-        room_temp: room_temp
+        room_temp: room_temp,
+        ac_mode: ac_mode
       })
       console.log(this.state.room_temp)
     }
@@ -261,13 +266,16 @@ class App extends React.Component {
                           <div>
                             <div className="attr-box">
                               <button className="vertical-middle fa fa-minus" onClick={() => this.set_temp(Number(this.state.ac_temp) - 1)}></button>
-                              <span className="vertical-middle text-label">{this.state.ac_temp} ℃</span>
+                              <span className="vertical-middle text-label">
+                                <i style={{"marginRight": 10}} className={this.state.ac_mode === 1 ? "fa fa-sun-o fa-spin" : (this.state.ac_mode === -1 ? "fa fa-snowflake-o fa-spin" : "fa fa-hand-peace-o")}></i>
+                                {this.state.ac_temp} ℃
+                              </span>
                               <button className="vertical-middle fa fa-plus" onClick={() => this.set_temp(Number(this.state.ac_temp) + 1)}></button>
                             </div>
                             <p></p>
                             <div className="attr-box">
                               <button className="vertical-middle fa fa-minus" onClick={() => this.set_wind(this.state.ac_wind - 1)}></button>
-                              <span className="vertical-middle text-label">{this.wind_int2str(this.state.ac_wind)} Wind</span>
+                              <span className="vertical-middle text-label">{this.wind_int2str(this.state.ac_wind).toUpperCase()} WIND</span>
                               <button className="vertical-middle fa fa-plus" onClick={() => this.set_wind(this.state.ac_wind + 1)}></button>
                             </div> 
                           </div> : <div></div>}
