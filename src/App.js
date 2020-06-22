@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import './style/html5up-dimension/assets/css/fontawesome-all.min.css';
-
+const ipaddr = 'http://39.106.86.23:8000'
 class App extends React.Component {
   constructor(props){
     super(props);
@@ -155,7 +155,7 @@ class App extends React.Component {
     this.update_room_temp();
     var request = require('superagent');
     request
-      .post('http://127.0.0.1:8000/api/user/heartbeat/')
+      .post(ipaddr + '/api/user/heartbeat/')
       .send({"room_id": this.state.room_id, 
             "temp": Number(this.state.room_temp).toFixed(1)})
       .then(res => {
@@ -169,7 +169,7 @@ class App extends React.Component {
   check_in() {
     var request = require('superagent');
     request
-      .get('http://127.0.0.1:8000/api/user/checkin/')
+      .get(ipaddr + '/api/user/checkin/')
       .then(res => {
         this.parse_res(res);
         let json = JSON.parse(res.text);
@@ -194,7 +194,7 @@ class App extends React.Component {
   power_on_off() {
     var request = require('superagent');
     request
-      .post('http://127.0.0.1:8000/api/user/setmode/')
+      .post(ipaddr + '/api/user/setmode/')
       .send({"room_id": this.state.room_id, 
             "ac_status": this.state.is_on ? "off" : this.wind_int2str(this.state.ac_wind), 
             "target_temp": Number(this.state.ac_temp).toFixed(1)})
@@ -214,7 +214,7 @@ class App extends React.Component {
   set_ac_mode(wind, temp){
     var request = require('superagent')
     request
-      .post('http://127.0.0.1:8000/api/user/setmode/')
+      .post(ipaddr + '/api/user/setmode/')
       .send({"room_id": this.state.room_id, 
             "ac_status": wind,
             "target_temp": Number(temp).toFixed(1)})
