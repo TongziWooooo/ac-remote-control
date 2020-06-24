@@ -17,7 +17,7 @@ class App extends React.Component {
       ac_mode: 0,
       ac_wind: 1,
       ac_actual_wind: 1,
-      ac_temp: "26.0",
+      ac_temp: 26,
       temp_min: 0,
       temp_max: 40,
       online_time: 0,
@@ -107,12 +107,7 @@ class App extends React.Component {
 
   update_ac_mode(ac_temp) {
     let ac_mode = 0;
-    if (Number(this.state.room_temp).toFixed(1) < ac_temp) {
-      ac_mode = 1;
-    }
-    else if (Number(this.state.room_temp).toFixed(1) > ac_temp) {
-      ac_mode = -1;
-    }
+    ac_mode = ac_temp > 25 ? 1 : 0;
     this.setState({
       ac_mode: ac_mode
     })
@@ -136,7 +131,6 @@ class App extends React.Component {
       console.log(this.state.room_temp)
     }
     else {
-      let ac_mode = 0;
       if (Number(this.state.room_temp).toFixed(1) < this.state.default_room_temp) {
         room_temp += 0.5 / (60000 / int)
       } 
@@ -145,7 +139,6 @@ class App extends React.Component {
       }
       this.setState({
         room_temp: room_temp,
-        ac_mode: ac_mode
       })
       console.log(this.state.room_temp)
     }
@@ -176,6 +169,7 @@ class App extends React.Component {
         let temp_min = json['temp_min'];
         let temp_max = json['temp_max'];
         let room_temp = json['temp'];
+        this.update_ac_mode(room_temp);
         let default_room_temp = room_temp;
         this.setState({
           temp_min: temp_min,
@@ -217,7 +211,7 @@ class App extends React.Component {
       .post(ipaddr + '/api/user/setmode/')
       .send({"room_id": this.state.room_id, 
             "ac_status": wind,
-            "target_temp": Number(temp).toFixed(1)})
+            "target_temp": Number(temp).toFixed(0)})
       .then(res => {
         this.stop_order_timer();
         console.log(this.state)
@@ -278,8 +272,8 @@ class App extends React.Component {
                             <div className="attr-box">
                               <button className="vertical-middle fa fa-minus" onClick={() => this.set_temp(Number(this.state.ac_temp) - 1)}></button>
                               <span className="vertical-middle text-label">
-                                <i style={{"marginRight": 10}} className={this.state.ac_mode === 1 ? "fa fa-sun-o fa-spin" : (this.state.ac_mode === -1 ? "fa fa-snowflake-o fa-spin" : "fa fa-hand-peace-o")}></i>
-                                {this.state.ac_temp} ℃
+                                <i style={{"marginRight": 10}} className={(this.state.ac_mode === 1 ? "fa fa-sun-o" : "fa fa-snowflake-o") + (this.state.is_served ? " fa-spin " : "")}></i>
+                                {Number(this.state.ac_temp).toFixed(0)} ℃
                               </span>
                               <button className="vertical-middle fa fa-plus" onClick={() => this.set_temp(Number(this.state.ac_temp) + 1)}></button>
                             </div>
