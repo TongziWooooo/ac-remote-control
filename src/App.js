@@ -1,6 +1,10 @@
 import React from 'react';
 import './App.css';
 import './style/html5up-dimension/assets/css/fontawesome-all.min.css';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { Slide, Zoom, Flip, Bounce } from 'react-toastify';
+
 const ipaddr = 'http://39.106.86.23:8000'   // 后端服务器地址
 const default_setting = {
   interval_heartbeat: 5000,         // 发送心跳包的频率
@@ -21,7 +25,8 @@ const default_setting = {
   checkin_time: "",                 // 入住时间
   power: 0,                         // 已使用电量
   expense: 0,                       // 已花费钱数
-  charge_policy: 0                  // 每度电花费
+  charge_policy: 0,                 // 每度电花费
+  is_offline: false                 // 是否处于离线状态
 }
 class App extends React.Component {
   constructor(props){
@@ -38,7 +43,15 @@ class App extends React.Component {
       case 3: 
         return "high";
       default:
-        alert('Out of wind range!');
+        toast.info('🦄 Out of wind range!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          });
         return -1;
     }
   }
@@ -52,7 +65,15 @@ class App extends React.Component {
       case "high": 
         return 3;
       default:
-        alert('Out of wind range!');
+        toast.info('🦄 Out of wind range!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          });
         return -1;
     }
   }
@@ -60,7 +81,15 @@ class App extends React.Component {
   test_error(res) {     // 测试返回内容中是否有报错字段
     let json = JSON.parse(res.text);
     if (json.hasOwnProperty('Error')) {
-      alert(json['Error']);
+      toast.error('❌ ' + json['Error'], {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        });
       return -1;
     }
     else{
@@ -70,6 +99,11 @@ class App extends React.Component {
 
   parse_res(res) {      // 通用的数据返回解析函数
     let json = JSON.parse(res.text);
+    let is_checked_in = json['checked'];
+    if (!is_checked_in) {   // 若此时已经checkout，需要暂停heartbeat的定时调用
+      this.set_checkout();
+      return;
+    }
     let room_id = json['room_id'];
     let ac_status = json['ac_status'];
     let ac_actual_wind = this.state.ac_wind;
@@ -84,10 +118,6 @@ class App extends React.Component {
     let power = json['elec'];
     let online_time = json['online_time'];
     let checkin_time = json['checkin_time'];
-    let is_checked_in = json['checked'];
-    if (!is_checked_in) {   // 若此时已经checkout，需要暂停heartbeat的定时调用
-      this.set_checkout();
-    }
     let expense = json['total_money'];
     let charge_policy = json['price'];
     this.setState({
@@ -105,7 +135,15 @@ class App extends React.Component {
 
   set_checkout() {
     this.interval_heartbeat && clearInterval(this.interval_heartbeat);
-    alert('You have already checked out. The system will soon exit.');
+    toast.info('🦄 You have already checked out. The system will soon exit.', {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      });
     this.setState(default_setting);
   }
   
@@ -170,10 +208,23 @@ class App extends React.Component {
       .then(res => {
         if (this.test_error(res) === 0) {
           this.parse_res(res);
+        if (this.state.is_offline) {
+          this.setState({is_offline: false});
+          toast("🦄 You have reconnected to us!");
+        }
         }
       })
       .catch (err => {
-        alert(err);
+        this.setState({is_offline: true});
+        toast.warn('😅 Looks like there is something wrong with the network. Trying to get connection... ', {
+          position: "top-right",
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          });
       });
   }
 
@@ -200,33 +251,62 @@ class App extends React.Component {
             default_room_temp: default_room_temp
             }); 
             this.interval_heartbeat = setInterval(() => this.heartbeat(), this.state.interval_heartbeat);
+            toast.success('👏 Successfully checked in!', {
+              position: "top-right",
+              autoClose: 2000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              });
         }
           console.log(this.state);
       })
       .catch (err => {
-        alert(err);
+        toast.error('❌ ' + err, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          });
       })
   }
 
   power_on_off() {    // 开机/关机
+    let default_wind = 2;
+    let default_temp = 25;
     var request = require('superagent');
     request
       .post(ipaddr + '/api/user/setmode/')
       .send({"room_id": this.state.room_id, 
-            "ac_status": this.state.is_on ? "off" : this.wind_int2str(this.state.ac_wind), 
-            "target_temp": Number(this.state.ac_temp).toFixed(1)})
+            "ac_status": this.state.is_on ? "off" : this.wind_int2str(default_wind), 
+            "target_temp": Number(default_temp).toFixed(1)})
       .then(res => {
         if (this.test_error(res) === 0) {
           this.parse_res(res);
           let is_on = !this.state.is_on;
           this.setState({
-            is_on: is_on
+            is_on: is_on,
+            ac_wind: default_wind,
+            ac_temp: default_temp
           });
         }
         console.log(this.state);
       })
       .catch (err => {
-        alert(err)
+        toast.error('❌ ' + err, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          });
       })
   }
 
@@ -241,15 +321,40 @@ class App extends React.Component {
         this.stop_order_timer();
         this.test_error(res);
         console.log(this.state)
+        toast.success('👏 Successfully set!', {
+          position: "top-right",
+          autoClose: 1000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          });
       })
       .catch (err => {
-        alert(err)
+        toast.error('❌ ' + err, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          });
       })
   }
 
   set_temp(temp) {    // 设置空调温度
     if (temp < this.state.temp_min || temp > this.state.temp_max) {
-      alert('Out of temp range!');
+      toast.info('🦄 Out of temp range!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        });
       return;
     }
     this.setState({
@@ -262,7 +367,15 @@ class App extends React.Component {
 
   set_wind(wind) {    // 设置空调风速
     if (wind <= 0 || wind > 3) {
-      alert('Out of wind range!');
+      toast.info('🦄 Out of wind range!!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        });
       return;
     }
     let wind_type = this.wind_int2str(wind);
@@ -275,6 +388,7 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
+          <ToastContainer transition={Slide}/>
           <div id="wrapper">
               <header id="header">
                 {
