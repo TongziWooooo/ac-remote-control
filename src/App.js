@@ -190,7 +190,7 @@ class App extends React.Component {
           let temp_max = Number(json['temp_max']);
           let room_temp = Number(json['temp']);
           let ac_temp = Number(json['target_temp']);
-          this.update_ac_mode(room_temp);
+          this.update_ac_mode(ac_temp);
           let default_room_temp = room_temp;
           this.setState({
             temp_min: temp_min,
@@ -298,7 +298,7 @@ class App extends React.Component {
                             <div className="attr-box">
                               <button className="vertical-middle fa fa-minus" onClick={() => this.set_temp(Number(this.state.ac_temp) - 1)}></button>
                               <span className="vertical-middle text-label">
-                                <i style={{"marginRight": 10}} className={(this.state.ac_mode === 1 ? "fa fa-sun-o" : "fa fa-snowflake-o") + (this.state.is_served ? " fa-spin " : "")}></i>
+                                <i className={"icon-text " + (this.state.ac_mode === 1 ? "fa fa-sun-o" : "fa fa-snowflake-o") + (this.state.is_served ? " fa-spin " : "")}></i>
                                 {Number(this.state.ac_temp).toFixed(0)} ℃
                               </span>
                               <button className="vertical-middle fa fa-plus" onClick={() => this.set_temp(Number(this.state.ac_temp) + 1)}></button>
@@ -315,9 +315,9 @@ class App extends React.Component {
                             <span className="image main"><img src="style/html5up-dimension/images/pic01.jpg" alt="" style={{height: 0 + 'px', width: 550 + 'px'}} /></span>
                             <h2 className="major">Detail</h2>
                             <h3>Room {this.state.room_id}</h3>
-                            <h5>Now Temp: {Number(this.state.room_temp).toFixed(1)} ℃</h5>
-                            <h5>Power Count: {this.state.power} kwh</h5>
-                            <h5>Expense Count: {this.state.expense} $</h5>
+                            <h5><i className={"icon-text fa fa-thermometer-half"}></i><span className={"detail-label-box"}>Temp</span><span className={"detail-text-box"}>{Number(this.state.room_temp).toFixed(1)} ℃</span></h5>
+                            <h5><i className={"icon-text fa fa-bolt"}></i><span className={"detail-label-box"}>Power</span><span className={"detail-text-box"}>{this.state.power} kwh</span></h5>
+                            <h5><i className={"icon-text fa fa-dollar"}></i><span className={"detail-label-box"}>Expense</span><span className={"detail-text-box"}>{this.state.expense} $</span></h5>
                           </article>
                         </div>
                       :
