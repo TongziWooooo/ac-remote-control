@@ -3,7 +3,7 @@ import './App.css';
 import './style/html5up-dimension/assets/css/fontawesome-all.min.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Slide, Zoom, Flip, Bounce } from 'react-toastify';
+import { Slide } from 'react-toastify';
 
 const ipaddr = 'http://39.106.86.23:8000'   // 后端服务器地址
 const default_setting = {
@@ -15,6 +15,7 @@ const default_setting = {
   room_id: "000",                   // 空调（房间）编号
   room_temp: 0.0,                   // 房间温度
   default_room_temp: 0.0,           // 默认房间温度
+  default_ac_temp: 25,              // 默认空调温度
   ac_mode: 0,                       // 制热/制冷
   ac_wind: 2,                       // 风速
   ac_actual_wind: 0,                // 此时实际被送的风速
@@ -243,12 +244,14 @@ class App extends React.Component {
           let ac_temp = Number(json['target_temp']);
           this.update_ac_mode(ac_temp);
           let default_room_temp = room_temp;
+          let default_ac_temp = ac_temp;
           this.setState({
             temp_min: temp_min,
             temp_max: temp_max,
             room_temp: room_temp,
             ac_temp: ac_temp,
-            default_room_temp: default_room_temp
+            default_room_temp: default_room_temp,
+            default_ac_temp: default_ac_temp
             }); 
             this.interval_heartbeat = setInterval(() => this.heartbeat(), this.state.interval_heartbeat);
             toast.success('👏 Successfully checked in!', {
@@ -277,22 +280,22 @@ class App extends React.Component {
   }
 
   power_on_off() {    // 开机/关机
-    let default_wind = 2;
-    let default_temp = 25;
+    let default_ac_wind = 2;
+    let default_ac_temp = this.state.default_ac_temp;
     var request = require('superagent');
     request
       .post(ipaddr + '/api/user/setmode/')
       .send({"room_id": this.state.room_id, 
-            "ac_status": this.state.is_on ? "off" : this.wind_int2str(default_wind), 
-            "target_temp": Number(default_temp).toFixed(1)})
+            "ac_status": this.state.is_on ? "off" : this.wind_int2str(default_ac_wind), 
+            "target_temp": Number(default_ac_temp).toFixed(1)})
       .then(res => {
         if (this.test_error(res) === 0) {
           this.parse_res(res);
           let is_on = !this.state.is_on;
           this.setState({
             is_on: is_on,
-            ac_wind: default_wind,
-            ac_temp: default_temp
+            ac_wind: default_ac_wind,
+            ac_temp: default_ac_temp
           });
         }
         console.log(this.state);
